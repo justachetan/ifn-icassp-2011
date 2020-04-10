@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.stats as stats
 
 
 def get_Smean(f0_cntr):
@@ -42,6 +43,91 @@ def get_SQ75(f0_cntr):
     return np.quantile(f0_cntr, 0.75)
 
 
+def get_Smedian(f0_cntr):
+    return np.median(f0_cntr)
+
+
+def get_Sdmedian(f0_cntr):
+    grad = np.gradient(f0_cntr)
+    return np.median(grad)
+
+
+def get_Siqr(f0_cntr):
+    uqr = get_SQ75(f0_cntr)
+    lqr = get_SQ25(f0_cntr)
+    return uqr - lqr
+
+
+def get_Sdiqr(f0_cntr):
+    grad = np.gradient(f0_cntr)
+    return get_Siqr(grad)
+
+
+def get_Skurt(f0_cntr):
+    return stats.kurtosis(f0_cntr)
+
+
+def get_Sdkurt(f0_cntr):
+    grad = np.gradient(f0_cntr)
+    return stats.kurtosis(grad)
+
+
+def get_Sskew(f0_cntr):
+    return stats.skew(f0_cntr)
+
+
+def get_Sdskew(f0_cntr):
+    grad = np.gradient(f0_cntr)
+    return stats.skew(grad)
+
+
+def get_SVmeanRange(f0_cntr):
+    in_voice = False
+    cum_range = 0
+    num_voice_seg = 0
+    start_idx = -1
+    for i in range(f0_cntr.shape[0]):
+        if in_voice == False:
+            if f0_cntr[i] != 0 and (f0_cntr[i: i + 5] != 0).all():
+                in_voice = True
+                num_voice_seg += 1
+                start_idx = i
+        elif in_voice == True:
+            if f0_cntr[i] != 0:
+                continue
+            elif f0_cntr[i] == 0:
+                in_voice = False
+                cum_range += np.max(f0_cntr[start_idx:i]) - \
+                    np.min(f0_cntr[start_idx:i])
+
+    return cum_range / num_voice_seg
+
+
+def get_SVmaxCurv(f0_cntr):
+
+    in_voice = False
+    max_curv = None
+    num_voice_seg = 0
+    start_idx = -1
+    for i in range(f0_cntr.shape[0]):
+        if in_voice == False:
+            if f0_cntr[i] != 0 and (f0_cntr[i: i + 5] != 0).all():
+                in_voice = True
+                num_voice_seg += 1
+                start_idx = i
+        elif in_voice == True:
+            if f0_cntr[i] != 0:
+                continue
+            elif f0_cntr[i] == 0:
+                in_voice = False
+                curv = np.polyfit(np.arange(i - start_idx),
+                                  f0_cntr[start_idx:i], 2)[0]
+                if max_curv == None or curv > max_curv:
+                    max_curv = curv
+
+    return curv
+
+
 def feat_ext(corpus, feats, save=None):
     samples = list()
     for i in range(len(corpus)):
@@ -68,5 +154,15 @@ feature_map = {
     "Smax": get_Smax,
     "Smin": get_Smin,
     "SQ25": get_SQ25,
-    "SQ75": get_SQ75
+    "SQ75": get_SQ75,
+    "Smedian": get_Smedian,
+    "Sdmedian": get_Sdmedian,
+    "Siqr": get_Siqr,
+    "Sdiqr": get_Sdiqr,
+    "Skurt": get_Skurt,
+    "Sdkurt": get_Sdkurt,
+    "Sskew": get_Sskew,
+    "Sdskew": get_Sdskew,
+    "SVmeanRange": get_SVmeanRange,
+    "SVmaxCurv": get_SVmaxCurv
 }
