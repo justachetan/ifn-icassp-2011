@@ -91,7 +91,7 @@ optional arguments:
 
 ## Results
 
-For detailed results and analysis, please refer to the [report](./report.pdf)
+For detailed results and analysis, please refer to the [report](./report.pdf).
 
 
 - - -
